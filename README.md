@@ -1,1 +1,1 @@
-# SignalRClientCppSample
+# SignalR C++ Client Samples
