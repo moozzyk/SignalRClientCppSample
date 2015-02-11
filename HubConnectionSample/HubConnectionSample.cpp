@@ -44,7 +44,7 @@ void chat(std::wstring name)
                 std::wstring message;
                 std::getline(std::wcin, message);
 
-                if (message == L"!q")
+                if (message == L":q")
                 {
                     break;
                 }
