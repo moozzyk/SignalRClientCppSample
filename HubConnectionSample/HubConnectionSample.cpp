@@ -10,7 +10,8 @@ void send_message(signalr::hub_proxy proxy, const std::wstring& name, const std:
     args[0] = web::json::value::string(name);
     args[1] = web::json::value(message);
 
-    proxy.invoke<void>(L"send", args, [](const web::json::value&){})
+    // if you get internal compiler error uncomment the lambda below or install VS Update 4
+    proxy.invoke<void>(L"send", args /*, [](const web::json::value&){} */)
         .then([](pplx::task<void> invoke_task)  // fire and forget but we need to observe exceptions
     {
         try

@@ -21,7 +21,7 @@ void send_message(signalr::connection &connection, std::wstring message)
 int _tmain(int argc, _TCHAR* argv[])
 {
     signalr::connection connection{ L"http://localhost:34281/echo" };
-    connection.set_message_received([](std::wstring m){ std::wcout << L"Message received:" << m << std::endl << L"Enter message: "; });
+    connection.set_message_received([](const std::wstring& m){ std::wcout << L"Message received:" << m << std::endl << L"Enter message: "; });
 
     pplx::task_completion_event<void> tce;
 
