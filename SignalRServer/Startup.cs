@@ -9,7 +9,7 @@ namespace SignalRServer
 {
     public class Startup
     {
-        public void Configuration(IAppBuilder app)
+        public void Configuration(IAppBuilder app)  
         {
             app.MapSignalR();
             app.MapSignalR<EchoConnection>("/echo");

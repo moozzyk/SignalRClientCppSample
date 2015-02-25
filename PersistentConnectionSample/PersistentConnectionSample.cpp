@@ -2,7 +2,7 @@
 #include "signalrclient\connection.h"
 #include <iostream>
 
-void send_message(signalr::connection &connection, std::wstring message)
+void send_message(signalr::connection &connection, const utility::string_t& message)
 {
     connection.send(message)
         .then([](pplx::task<void> send_task)  // fire and forget but we need to observe exceptions
@@ -13,61 +13,64 @@ void send_message(signalr::connection &connection, std::wstring message)
         }
         catch (const std::exception &e)
         {
-            std::cout << "Error while sending data: " << e.what();
+            ucout << U("Error while sending data: ") << e.what();
         }
     });
 }
 
-int _tmain(int argc, _TCHAR* argv[])
+int main()
 {
-    signalr::connection connection{ L"http://localhost:34281/echo" };
-    connection.set_message_received([](const std::wstring& m){ std::wcout << L"Message received:" << m << std::endl << L"Enter message: "; });
+    signalr::connection connection{ U("http://localhost:34281/echo") };
+    connection.set_message_received([](const utility::string_t& m)
+    {
+        ucout << U("Message received:") << m << std::endl << U("Enter message: ");
+    });
 
     pplx::task_completion_event<void> tce;
 
     connection.start()
         .then([&connection]() // fine to capture by reference - we are blocking so it is guaranteed to be valid
-    {
-        for (;;)
         {
-            std::wstring message;
-            std::getline(std::wcin, message);
-
-            if (message == L":q")
+            for (;;)
             {
-                break;
+                utility::string_t message;
+                std::getline(ucin, message);
+
+                if (message == U(":q"))
+                {
+                    break;
+                }
+
+                send_message(connection, message);
+            }
+        })
+        .then([&connection](pplx::task<void> previous_task)
+        {
+            try
+            {
+                previous_task.get();
+            }
+            catch (const std::exception &e)
+            {
+                ucout << U("exception: ") << e.what() << std::endl;
             }
 
-            send_message(connection, message);
-        }
-    })
-    .then([&connection](pplx::task<void> previous_task)
-    {
-        try
+            return connection.stop();
+        })
+        .then([tce](pplx::task<void> stop_task)
         {
-            previous_task.get();
-        }
-        catch (const std::exception &e)
-        {
-            std::cout << "exception: " << e.what() << std::endl;
-        }
+            try
+            {
+                stop_task.get();
+                ucout << U("connection stopped successfully") << std::endl;
+            }
+            catch (const std::exception &e)
+            {
+                ucout << U("exception when closing connection: ") << e.what() << std::endl;
+            }
 
-        return connection.stop();
-    })
-    .then([tce](pplx::task<void> stop_task)
-    {
-        try
-        {
-            stop_task.get();
-            std::cout << "connection stopped successfully" << std::endl;
-        }
-        catch (const std::exception &e)
-        {
-            std::cout << "exception when closing connection: " << e.what() << std::endl;
-        }
-
-        tce.set();
-    });
+            tce.set();
+        });
 
     pplx::task<void>(tce).get();
 

@@ -4,14 +4,14 @@
 #include <sstream>
 #include "signalrclient\hub_connection.h"
 
-void send_message(signalr::hub_proxy proxy, const std::wstring& name, const std::wstring& message)
+void send_message(signalr::hub_proxy proxy, const utility::string_t& name, const utility::string_t& message)
 {
     web::json::value args{};
     args[0] = web::json::value::string(name);
     args[1] = web::json::value(message);
 
-    // if you get internal compiler error uncomment the lambda below or install VS Update 4
-    proxy.invoke<void>(L"send", args /*, [](const web::json::value&){} */)
+    // if you get an internal compiler error uncomment the lambda below or install VS Update 4
+    proxy.invoke<void>(U("send"), args/*, [](const web::json::value&){}*/)
         .then([](pplx::task<void> invoke_task)  // fire and forget but we need to observe exceptions
     {
         try
@@ -20,32 +20,32 @@ void send_message(signalr::hub_proxy proxy, const std::wstring& name, const std:
         }
         catch (const std::exception &e)
         {
-            std::cout << "Error while sending data: " << e.what();
+            ucout << U("Error while sending data: ") << e.what();
         }
     });
 }
 
-void chat(std::wstring name)
+void chat(const utility::string_t& name)
 {
-    signalr::hub_connection connection{L"http://localhost:34281/SignalR"};
-    auto proxy = connection.create_hub_proxy(L"ChatHub");
-    proxy.on(L"broadcastMessage", [](const web::json::value& m)
+    signalr::hub_connection connection{U("http://localhost:34281/SignalR")};
+    auto proxy = connection.create_hub_proxy(U("ChatHub"));
+    proxy.on(U("broadcastMessage"), [](const web::json::value& m)
     {
-        std::wcout << std::endl << m.at(0).as_string() << " wrote:" << m.at(1).as_string() << std::endl << L"Enter your message: ";
+        ucout << std::endl << m.at(0).as_string() << U(" wrote:") << m.at(1).as_string() << std::endl << U("Enter your message: ");
     });
 
     pplx::task_completion_event<void> tce;
 
     connection.start()
         .then([proxy, name]()
-        mutable {
-        std::wcout << L"Enter your message:";
-        for (;;)
+        {
+            ucout << U("Enter your message:");
+            for (;;)
             {
-                std::wstring message;
-                std::getline(std::wcin, message);
+                utility::string_t message;
+                std::getline(ucin, message);
 
-                if (message == L":q")
+                if (message == U(":q"))
                 {
                     break;
                 }
@@ -61,7 +61,7 @@ void chat(std::wstring name)
             }
             catch (const std::exception &e)
             {
-                std::cout << "exception: " << e.what() << std::endl;
+                ucout << U("exception: ") << e.what() << std::endl;
             }
 
             return connection.stop();
@@ -71,11 +71,11 @@ void chat(std::wstring name)
             try
             {
                 stop_task.get();
-                std::cout << "connection stopped successfully" << std::endl;
+                ucout << U("connection stopped successfully") << std::endl;
             }
             catch (const std::exception &e)
             {
-                std::cout << "exception when closing connection: " << e.what() << std::endl;
+                ucout << U("exception when closing connection: ") << e.what() << std::endl;
             }
 
             tce.set();
@@ -84,11 +84,11 @@ void chat(std::wstring name)
         pplx::task<void>(tce).get();
 }
 
-int _tmain(int argc, _TCHAR* argv[])
+int main()
 {
-    std::wcout << L"Enter your name: ";
-    std::wstring name;
-    std::getline(std::wcin, name);
+    ucout << U("Enter your name: ");
+    utility::string_t name;
+    std::getline(ucin, name);
 
     chat(name);
 
