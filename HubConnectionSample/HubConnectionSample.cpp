@@ -34,8 +34,6 @@ void chat(const utility::string_t& name)
         ucout << std::endl << m.at(0).as_string() << U(" wrote:") << m.at(1).as_string() << std::endl << U("Enter your message: ");
     });
 
-    pplx::task_completion_event<void> tce;
-
     connection.start()
         .then([proxy, name]()
         {
@@ -53,20 +51,11 @@ void chat(const utility::string_t& name)
                 send_message(proxy, name, message);
             }
         })
-        .then([&connection](pplx::task<void> previous_task)
+        .then([&connection]() // fine to capture by reference - we are blocking so it is guaranteed to be valid
         {
-            try
-            {
-                previous_task.get();
-            }
-            catch (const std::exception &e)
-            {
-                ucout << U("exception: ") << e.what() << std::endl;
-            }
-
             return connection.stop();
         })
-        .then([tce](pplx::task<void> stop_task)
+        .then([](pplx::task<void> stop_task)
         {
             try
             {
@@ -75,13 +64,9 @@ void chat(const utility::string_t& name)
             }
             catch (const std::exception &e)
             {
-                ucout << U("exception when closing connection: ") << e.what() << std::endl;
+                ucout << U("exception when starting or stopping connection: ") << e.what() << std::endl;
             }
-
-            tce.set();
-        });
-
-        pplx::task<void>(tce).get();
+        }).get();
 }
 
 int main()
